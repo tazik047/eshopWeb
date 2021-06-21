@@ -130,6 +130,7 @@ namespace Microsoft.eShopWeb.PublicApi
                                   });
             });
 
+            services.AddApplicationInsightsTelemetry();
             services.AddControllers();
             services.AddMediatR(typeof(CatalogItem).Assembly);
 
