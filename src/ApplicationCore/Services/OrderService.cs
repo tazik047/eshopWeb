@@ -9,20 +9,23 @@ using System.Threading.Tasks;
 
 namespace Microsoft.eShopWeb.ApplicationCore.Services
 {
-    public class OrderService : IOrderService
+	public class OrderService : IOrderService
     {
         private readonly IAsyncRepository<Order> _orderRepository;
         private readonly IUriComposer _uriComposer;
         private readonly IAsyncRepository<Basket> _basketRepository;
         private readonly IAsyncRepository<CatalogItem> _itemRepository;
+        private readonly IAzureFunctionService _azureFunctionService;
 
         public OrderService(IAsyncRepository<Basket> basketRepository,
             IAsyncRepository<CatalogItem> itemRepository,
             IAsyncRepository<Order> orderRepository,
-            IUriComposer uriComposer)
+            IUriComposer uriComposer, 
+            IAzureFunctionService azureFunctionService)
         {
             _orderRepository = orderRepository;
             _uriComposer = uriComposer;
+            _azureFunctionService = azureFunctionService;
             _basketRepository = basketRepository;
             _itemRepository = itemRepository;
         }
@@ -49,6 +52,8 @@ namespace Microsoft.eShopWeb.ApplicationCore.Services
             var order = new Order(basket.BuyerId, shippingAddress, items);
 
             await _orderRepository.AddAsync(order);
+
+            await _azureFunctionService.InvokeOrderReserverAsync(order);
         }
     }
 }

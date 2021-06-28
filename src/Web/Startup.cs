@@ -152,7 +152,7 @@ namespace Microsoft.eShopWeb.Web
             // Blazor Admin Required Services for Prerendering
             services.AddScoped<HttpClient>(s => new HttpClient
             {
-                BaseAddress = new Uri(baseUrlConfig.WebBase)
+                BaseAddress = new Uri(baseUrlConfig.AdminBase)
             });
 
             // add blazor services
