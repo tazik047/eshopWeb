@@ -15,8 +15,7 @@ namespace Microsoft.eShopWeb.Infrastructure.Data
             int retryForAvailability = retry.Value;
             try
             {
-                // TODO: Only run this if using a real database
-                // catalogContext.Database.Migrate();
+	            await catalogContext.MigrateDb();
                 if (!await catalogContext.CatalogBrands.AnyAsync())
                 {
                     await catalogContext.CatalogBrands.AddRangeAsync(

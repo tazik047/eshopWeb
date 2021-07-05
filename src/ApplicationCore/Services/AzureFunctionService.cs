@@ -19,11 +19,45 @@ namespace Microsoft.eShopWeb.ApplicationCore.Services
 			_appLogger = appLogger;
 		}
 
+		public async Task InvokeDeliveryProcessorAsync(Order order)
+		{
+			if (string.IsNullOrEmpty(_baseUrlConfiguration.DeliveryProcessorFunc))
+			{
+				_appLogger.LogWarning("DeliveryProcessor AzureFunc URL is not defined");
+				return;
+			}
+
+			using (var client = new HttpClient())
+			{
+				var orderItems = order
+					.OrderItems
+					.Select(p => new
+					{
+						ItemId = p.ItemOrdered.CatalogItemId,
+						Name = p.ItemOrdered.ProductName,
+						PerItemPrice = p.UnitPrice,
+						ItemsCount = p.Units
+					})
+					.ToArray();
+				var data = new
+				{
+					Id = order.Id.ToString(),
+					ShippingAddress = order.ShipToAddress,
+					OrderItems = orderItems,
+					FinalPrice = order.Total(),
+					OrderDate = order.OrderDate
+				};
+
+				await client.PostAsJsonAsync(_baseUrlConfiguration.DeliveryProcessorFunc, data);
+			}
+		}
+
 		public async Task InvokeOrderReserverAsync(Order order)
 		{
 			if (string.IsNullOrEmpty(_baseUrlConfiguration.OrderReserverFunc))
 			{
 				_appLogger.LogWarning("OrderReserver AzureFunc URL is not defined");
+				return;
 			}
 
 			using (var client = new HttpClient())

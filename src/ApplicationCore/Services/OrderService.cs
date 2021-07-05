@@ -53,7 +53,7 @@ namespace Microsoft.eShopWeb.ApplicationCore.Services
 
             await _orderRepository.AddAsync(order);
 
-            await _azureFunctionService.InvokeOrderReserverAsync(order);
+            await _azureFunctionService.InvokeDeliveryProcessorAsync(order);
         }
     }
 }

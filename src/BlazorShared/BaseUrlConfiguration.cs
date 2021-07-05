@@ -8,5 +8,6 @@
         public string WebBase { get; set; }
         public string AdminBase { get; set; }
         public string OrderReserverFunc { get; set; }
+        public string DeliveryProcessorFunc { get; set; }
     }
 }

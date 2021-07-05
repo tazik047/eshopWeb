@@ -43,10 +43,10 @@ namespace Microsoft.eShopWeb.Web
         public void ConfigureDevelopmentServices(IServiceCollection services)
         {
             // use in-memory database
-            ConfigureInMemoryDatabases(services);
+            //ConfigureInMemoryDatabases(services);
 
             // use real database
-            //ConfigureProductionServices(services);
+            ConfigureProductionServices(services);
         }
 
         public void ConfigureDockerServices(IServiceCollection services)
@@ -76,15 +76,14 @@ namespace Microsoft.eShopWeb.Web
             // use real database
             // Requires LocalDB which can be installed with SQL Server Express 2016
             // https://www.microsoft.com/en-us/download/details.aspx?id=54284
-            /*services.AddDbContext<CatalogContext>(c =>
+            services.AddDbContext<CatalogContext>(c =>
                 c.UseSqlServer(Configuration.GetConnectionString("CatalogConnection")));
 
             // Add Identity DbContext
             services.AddDbContext<AppIdentityDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("IdentityConnection")));
 
-            ConfigureServices(services);*/
-            ConfigureDevelopmentServices(services);
+            ConfigureServices(services);
         }
 
         public void ConfigureTestingServices(IServiceCollection services)
