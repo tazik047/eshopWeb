@@ -1,13 +1,10 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -16,32 +13,68 @@ namespace OrderItemsReserver
     public static class OrderFunction
     {
         [FunctionName("OrderFunction")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            Binder binder,
-            ILogger log)
+        public static async Task Run([ServiceBusTrigger("%MessageQueueName%", Connection = "ServiceBusConnection")]string myQueueItem,
+			Binder binder, 
+			ILogger log,
+			ExecutionContext context)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            log.LogInformation($"C# ServiceBus queue trigger function processed message: {myQueueItem}");
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            
-            log.LogInformation(requestBody);
+			var configurationBuilder = new ConfigurationBuilder()
+				.SetBasePath(context.FunctionAppDirectory)
+				.AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
+				.AddEnvironmentVariables()
+				.Build();
 
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
+			dynamic data = JsonConvert.DeserializeObject(myQueueItem);
 
-            string order = data.data;
-            var attributes = new Attribute[]
-            {
-	            new BlobAttribute($"orders/{data.id}.json", FileAccess.Write),
-	            new StorageAccountAttribute("AzureWebJobsStorage")
-            };
+			var action = (Func<dynamic, Task>)(async d =>
+			{
+				string order = data.data;
+				var attributes = new Attribute[]
+				{
+					new BlobAttribute($"orders/{data.id}.json", FileAccess.Write),
+					new StorageAccountAttribute("AzureWebJobsStorage")
+				};
 
-            using (var writer = await binder.BindAsync<TextWriter>(attributes))
-            {
-	            await writer.WriteLineAsync(order);
-            }
+				using (var writer = await binder.BindAsync<TextWriter>(attributes))
+				{
+					await writer.WriteLineAsync(order);
+				}
+			});
+			await RetryService(action, data, log, configurationBuilder);
+		}
 
-            return new OkObjectResult(order);
-        }
-    }
+		private static async Task RetryService(Func<dynamic, Task> action, dynamic data, ILogger logger, IConfiguration configuration)
+		{
+			var triesCount = 0;
+			while (true)
+			{
+				try
+				{
+					await action(data);
+					return;
+				}
+				catch (Exception e)
+				{
+					triesCount++;
+					logger.LogError(e, $"Retry error #{triesCount}");
+
+					if (triesCount == 3)
+					{
+						await SendEmail(data, configuration);
+						throw;
+					}
+				}
+			}
+		}
+
+		private static async Task SendEmail(object data, IConfiguration configuration)
+		{
+			using (var client = new HttpClient())
+			{
+				await client.PostAsJsonAsync(configuration["logicAppUrl"], data);
+			}
+		}
+	}
 }

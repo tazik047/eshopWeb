@@ -148,6 +148,11 @@ namespace Microsoft.eShopWeb.Web
             var baseUrlConfig = new BaseUrlConfiguration();
             Configuration.Bind(BaseUrlConfiguration.CONFIG_NAME, baseUrlConfig);
             services.AddScoped<BaseUrlConfiguration>(sp => baseUrlConfig);
+
+            var connections = new ConnectionStringConfiguration();
+            Configuration.Bind(ConnectionStringConfiguration.CONFIG_NAME, connections);
+            services.AddScoped(sp => connections);
+
             // Blazor Admin Required Services for Prerendering
             services.AddScoped<HttpClient>(s => new HttpClient
             {

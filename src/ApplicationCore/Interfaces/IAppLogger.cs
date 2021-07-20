@@ -1,4 +1,6 @@
-﻿namespace Microsoft.eShopWeb.ApplicationCore.Interfaces
+﻿using System;
+
+namespace Microsoft.eShopWeb.ApplicationCore.Interfaces
 {
     /// <summary>
     /// This type eliminates the need to depend directly on the ASP.NET Core logging types.
@@ -8,5 +10,6 @@
     {
         void LogInformation(string message, params object[] args);
         void LogWarning(string message, params object[] args);
+        void LogError(Exception e, string message, params object[] args);
     }
 }
