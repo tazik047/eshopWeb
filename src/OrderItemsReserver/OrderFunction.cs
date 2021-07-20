@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
@@ -73,12 +74,16 @@ namespace OrderItemsReserver
 		{
 			using (var client = new HttpClient())
 			{
+				int id = Convert.ToInt32(data.id);
+				string order = data.data.ToString();
 				var body = new
 				{
-					id = data.id,
-					data = data.data
+					id = id,
+					data = order
 				};
-				await client.PostAsJsonAsync(configuration["logicAppUrl"], body);
+
+				var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+				await client.PostAsync(new Uri(configuration["logicAppUrl"]), content);
 			}
 		}
 	}
