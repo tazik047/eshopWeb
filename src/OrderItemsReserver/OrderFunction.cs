@@ -63,17 +63,22 @@ namespace OrderItemsReserver
 					if (triesCount == 3)
 					{
 						await SendEmail(data, configuration);
-						throw;
+						break;
 					}
 				}
 			}
 		}
 
-		private static async Task SendEmail(object data, IConfiguration configuration)
+		private static async Task SendEmail(dynamic data, IConfiguration configuration)
 		{
 			using (var client = new HttpClient())
 			{
-				await client.PostAsJsonAsync(configuration["logicAppUrl"], data);
+				var body = new
+				{
+					id = data.id,
+					data = data.data
+				};
+				await client.PostAsJsonAsync(configuration["logicAppUrl"], body);
 			}
 		}
 	}
